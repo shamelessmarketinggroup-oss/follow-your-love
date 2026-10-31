@@ -1,0 +1,8 @@
+{
+  "name": "follow-your-love",
+  "version": "0.2.0",
+  "description": "Ambient flight display — backend + display + setup page (SQLite store)",
+  "main": "server.js",
+  "scripts": { "start": "node --disable-warning=ExperimentalWarning server.js" },
+  "engines": { "node": ">=22" }
+}

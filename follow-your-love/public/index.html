@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Follow your love</title>
+<style>
+  :root{
+    --bg:#0b1322; --panel:#0c1526;
+    --txt:#e9eef8; --txt2:#9aa6c0; --txt3:#6b768f;
+    --accent:#6f9bf2; --accent-soft:#2b3a5a; --home:#f2b06a; --plane:#dbe6ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:#000; color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100dvh; overflow:hidden; gap:3vmin;
+  }
+  .stage{
+    position:relative; width:min(86vmin,86vw,760px); aspect-ratio:1/1;
+    border-radius:50%; overflow:hidden; container-type:size; background:var(--panel);
+    box-shadow:0 0 0 1px rgba(255,255,255,.06), 0 24px 80px rgba(0,0,0,.6);
+  }
+  .screen{position:absolute; inset:0; opacity:0; transition:opacity .9s ease; pointer-events:none}
+  .screen.active{opacity:1}
+  .dots{position:absolute; left:0; right:0; bottom:7%; display:flex; gap:1.8cqmin; justify-content:center}
+  .dot{width:1.7cqmin; height:1.7cqmin; border-radius:50%; background:rgba(255,255,255,.28)}
+  .dot.on{background:#fff}
+
+  #photo{background-size:cover; background-position:center top}
+  #photo .scrim{position:absolute; inset:0; background:linear-gradient(to top,rgba(0,0,0,.6) 0%,rgba(0,0,0,0) 42%)}
+  #photo .cap{position:absolute; left:0; right:0; bottom:15%; text-align:center}
+  #photo .slogan{font-size:5.4cqmin; font-weight:500; letter-spacing:.3cqmin; text-shadow:0 2px 18px rgba(0,0,0,.55)}
+  #photo .heart{width:4.3cqmin; height:4.3cqmin; fill:currentColor; vertical-align:-.7cqmin; margin-left:.8cqmin}
+  #photo .place{font-size:3.4cqmin; color:#ece7df; margin-top:1.1cqmin; text-shadow:0 2px 14px rgba(0,0,0,.55)}
+
+  #journey .eyebrow{position:absolute; top:11%; left:0; right:0; text-align:center; font-size:2.9cqmin; letter-spacing:2.4px; text-transform:uppercase; color:var(--txt3)}
+  #journey .flightno{position:absolute; top:15.5%; left:0; right:0; text-align:center; font-size:5.6cqmin; font-weight:600; letter-spacing:.6cqmin}
+  #journey svg{position:absolute; inset:0; width:100%; height:100%}
+  #journey .code{position:absolute; text-align:center; width:24%}
+  #journey .code .c{font-size:3.6cqmin; font-weight:600}
+  #journey .code .city{font-size:2.7cqmin; color:var(--txt3)}
+  #journey .lhr{left:9%; top:59.5%}
+  #journey .syd{right:9%; top:59.5%}
+  #journey .over{position:absolute; top:63.5%; left:0; right:0; text-align:center; font-size:3.7cqmin; color:var(--txt2)}
+  #journey .togo{position:absolute; top:70.5%; left:0; right:0; text-align:center; font-size:2.9cqmin; color:var(--txt3)}
+  #journey .stats{position:absolute; top:77.5%; left:0; right:0; display:flex; justify-content:center; gap:7cqmin}
+  #journey .stat{text-align:center}
+  #journey .stat .v{font-size:3.6cqmin; font-weight:600}
+  #journey .stat .l{font-size:2.6cqmin; color:var(--txt3); margin-top:.3cqmin}
+
+  #idle{background:var(--panel)}
+  #idle .clock{position:absolute; top:23%; left:0; right:0; text-align:center; font-size:19cqmin; font-weight:300; letter-spacing:.4cqmin}
+  #idle .date{position:absolute; top:45%; left:0; right:0; text-align:center; font-size:3.4cqmin; color:var(--txt3)}
+  #idle .wx{position:absolute; top:56%; left:0; right:0; display:flex; align-items:center; justify-content:center; gap:2.4cqmin; color:var(--txt2)}
+  #idle .wx svg{width:5.4cqmin; height:5.4cqmin}
+  #idle .wx .temp{font-size:4.4cqmin; font-weight:500; color:var(--txt)}
+  #idle .wx .loc{font-size:3cqmin; color:var(--txt3)}
+  #idle .teaser{position:absolute; top:69%; left:0; right:0; text-align:center}
+  #idle .teaser span{font-size:2.9cqmin; color:#9fb0d6; background:rgba(40,60,100,.45); padding:1.2cqmin 3cqmin; border-radius:999px}
+
+  .controls{display:none; flex-wrap:wrap; align-items:center; justify-content:center; gap:14px;
+    background:rgba(20,24,33,.85); border:1px solid rgba(255,255,255,.08); padding:12px 16px; border-radius:16px;
+    max-width:92vw; font-size:13px; color:var(--txt2); backdrop-filter:blur(8px)}
+  .controls.show{display:flex}
+  .controls .sep{width:1px; height:22px; background:rgba(255,255,255,.1)}
+  .controls button{font:inherit; color:var(--txt); background:transparent; border:1px solid rgba(255,255,255,.16); padding:7px 12px; border-radius:9px; cursor:pointer}
+  .controls button:hover{background:rgba(255,255,255,.06)}
+  .controls button.on{background:var(--accent); border-color:var(--accent); color:#06101f}
+  .controls input[type=range]{width:150px; accent-color:var(--accent)}
+  .controls label{display:flex; align-items:center; gap:7px; cursor:pointer}
+  .controls .note{flex-basis:100%; text-align:center; color:var(--txt3); font-size:11.5px}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){ .screen{transition:none} }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage" aria-label="Flight display">
+
+    <section class="screen" id="photo">
+      <div class="scrim"></div>
+      <div class="cap">
+        <div class="slogan">Follow your love<svg class="heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+        <div class="place" id="photoDest">&nbsp;</div>
+      </div>
+      <div class="dots" data-dots="0"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></div>
+    </section>
+
+    <section class="screen" id="journey">
+      <div class="eyebrow" id="jEyebrow">&nbsp;</div>
+      <div class="flightno" id="jFlightno">&nbsp;</div>
+      <svg viewBox="0 0 360 360" aria-hidden="true">
+        <path d="M75 205 Q170 80 265 205" fill="none" stroke="var(--accent-soft)" stroke-width="3"/>
+        <path id="travel" d="M75 205 Q170 80 265 205" fill="none" stroke="var(--accent)" stroke-width="3" pathLength="100" stroke-dasharray="50 100" stroke-linecap="round"/>
+        <circle cx="75" cy="205" r="5.5" fill="var(--accent)"/>
+        <circle cx="265" cy="205" r="5.5" fill="var(--home)"/>
+        <g id="plane" fill="var(--plane)"><path d="M22 16v-2l-8.5-5V3.5C13.5 2.67 12.83 2 12 2s-1.5.67-1.5 1.5V9L2 14v2l8.5-2.5V19L8 20.5V22l4-1 4 1v-1.5L13.5 19v-7.5L22 16z"/></g>
+      </svg>
+      <div class="code lhr"><div class="c" id="depCode">—</div><div class="city" id="depCity">&nbsp;</div></div>
+      <div class="code syd"><div class="c" id="arrCode">—</div><div class="city" id="arrCity">&nbsp;</div></div>
+      <div class="over" id="over">&nbsp;</div>
+      <div class="togo" id="togo">&nbsp;</div>
+      <div class="stats">
+        <div class="stat"><div class="v" id="alt">—</div><div class="l">feet</div></div>
+        <div class="stat"><div class="v" id="spd">—</div><div class="l">km/h</div></div>
+        <div class="stat"><div class="v" id="lands">—</div><div class="l">lands</div></div>
+      </div>
+      <div class="dots" data-dots="1"><span class="dot"></span><span class="dot on"></span><span class="dot"></span></div>
+    </section>
+
+    <section class="screen" id="idle">
+      <div class="clock" id="clock">--:--</div>
+      <div class="date" id="date">&nbsp;</div>
+      <div class="wx">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--txt2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 18a4 4 0 0 1 .6-7.96 5.2 5.2 0 0 1 10 .96A3.5 3.5 0 0 1 17 18H6.5z"/></svg>
+        <span class="temp" id="temp">—</span><span class="loc" id="wxLoc">&nbsp;</span>
+      </div>
+      <div class="teaser"><span id="teaser">&nbsp;</span></div>
+      <div class="dots" data-dots="2"><span class="dot"></span><span class="dot"></span><span class="dot on"></span></div>
+    </section>
+  </div>
+
+  <div class="controls" id="controls" role="group" aria-label="Demo controls">
+    <button data-screen="photo">Photo</button>
+    <button data-screen="journey">Journey</button>
+    <button data-screen="idle">Idle</button>
+    <div class="sep"></div>
+    <button id="autoBtn" class="on" aria-pressed="true">Auto-rotate</button>
+    <label>Progress <input type="range" id="prog" min="0" max="100" value="50" /></label>
+    <button id="fsBtn">Fullscreen</button>
+    <div class="note">Demo controls (mock flight). With a real flight + API key these hide and the display runs itself.</div>
+  </div>
+
+<script>
+(function(){
+  var reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var qs = new URLSearchParams(location.search);
+  var device = qs.get('device') || 'demo';
+  var forceControls = qs.has('controls');
+
+  var state = { screen:'journey', auto:true, manual:null, cfg:null, flight:null, wx:null };
+  var order = ['photo','journey','idle'];
+  var els = id => document.getElementById(id);
+
+  /* ---- geometry (stylised arc) ---- */
+  var P0=[75,205], P1=[170,80], P2=[265,205];
+  function bez(t){ var u=1-t;
+    return { x:u*u*P0[0]+2*u*t*P1[0]+t*t*P2[0], y:u*u*P0[1]+2*u*t*P1[1]+t*t*P2[1],
+      ang:Math.atan2(2*u*(P1[1]-P0[1])+2*t*(P2[1]-P1[1]), 2*u*(P1[0]-P0[0])+2*t*(P2[0]-P1[0]))*180/Math.PI }; }
+
+  /* ---- great-circle point + rough region name ---- */
+  function rad(d){return d*Math.PI/180;} function deg(r){return r*180/Math.PI;}
+  function gcPoint(lat1,lon1,lat2,lon2,f){
+    var φ1=rad(lat1),λ1=rad(lon1),φ2=rad(lat2),λ2=rad(lon2);
+    var d=2*Math.asin(Math.sqrt(Math.pow(Math.sin((φ2-φ1)/2),2)+Math.cos(φ1)*Math.cos(φ2)*Math.pow(Math.sin((λ2-λ1)/2),2)));
+    if(d===0) return {lat:lat1,lon:lon1};
+    var A=Math.sin((1-f)*d)/Math.sin(d), B=Math.sin(f*d)/Math.sin(d);
+    var x=A*Math.cos(φ1)*Math.cos(λ1)+B*Math.cos(φ2)*Math.cos(λ2);
+    var y=A*Math.cos(φ1)*Math.sin(λ1)+B*Math.cos(φ2)*Math.sin(λ2);
+    var z=A*Math.sin(φ1)+B*Math.sin(φ2);
+    return {lat:deg(Math.atan2(z,Math.sqrt(x*x+y*y))), lon:deg(Math.atan2(y,x))};
+  }
+  function inBox(la,lo,b){ return la>=b[0]&&la<=b[1]&&lo>=b[2]&&lo<=b[3]; }
+  var LAND=[['Europe',[36,71,-10,40]],['Africa',[-35,37,-18,52]],['Asia',[5,78,40,150]],
+    ['Australia',[-44,-10,112,154]],['North America',[15,72,-168,-52]],['South America',[-56,13,-82,-34]]];
+  function regionAt(la,lo){
+    if(la<-60) return 'Over Antarctica';
+    for(var i=0;i<LAND.length;i++){ if(inBox(la,lo,LAND[i][1])) return 'Over '+LAND[i][0]; }
+    if(la>72) return 'Over the Arctic';
+    if(lo>=20 && lo<=120 && la<=30) return 'Over the Indian Ocean';
+    if(lo>=-70 && lo<=20) return 'Over the Atlantic';
+    return 'Over the Pacific';
+  }
+
+  /* ---- progress from times ---- */
+  function progressFromFlight(fl){
+    if(state.manual!=null) return state.manual;
+    if(!fl) return 0;
+    if(/arriv|landed/i.test(fl.status)) return 1;
+    var dep=fl.dep&&fl.dep.time?Date.parse(fl.dep.time):null;
+    var arr=fl.arr&&fl.arr.time?Date.parse(fl.arr.time):null;
+    if(!dep||!arr||arr<=dep) return 0;
+    return Math.max(0, Math.min(1, (Date.now()-dep)/(arr-dep)));
+  }
+  function fmtToGo(fl,t){
+    if(t>=1) return 'Landed';
+    var arr=fl.arr&&fl.arr.time?Date.parse(fl.arr.time):null;
+    var rem = arr ? Math.round((arr-Date.now())/60000) : null;
+    if(rem==null||rem<0) return '';
+    return Math.floor(rem/60)+'h '+(rem%60)+'m to go';
+  }
+  function localTime(iso,tz){ try{ return new Intl.DateTimeFormat(undefined,{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:tz}).format(new Date(iso)); }catch(e){ return '—'; } }
+
+  /* ---- render ---- */
+  function render(){
+    var fl=state.flight, cfg=state.cfg;
+    // photo (served as image bytes by the backend)
+    els('photo').style.backgroundImage = "url(/api/photo?device="+encodeURIComponent(device)+")";
+    var dest = (cfg&&cfg.destinationCity) || (fl&&fl.arr&&fl.arr.city) || '';
+    var name = (cfg&&cfg.partnerName) || '';
+    els('photoDest').textContent = (name&&dest)?(name+' flying to '+dest):'';
+    // journey
+    if(fl){
+      els('jFlightno').textContent = fl.number||'';
+      els('jEyebrow').textContent = name?(name+'’s flight'):'In flight';
+      els('depCode').textContent = fl.dep.iata||'—'; els('depCity').textContent = fl.dep.city||'';
+      els('arrCode').textContent = fl.arr.iata||'—'; els('arrCity').textContent = fl.arr.city||'';
+      var t = progressFromFlight(fl);
+      els('travel').setAttribute('stroke-dasharray',(t*100).toFixed(1)+' 100');
+      var p=bez(t);
+      els('plane').setAttribute('transform','translate('+p.x.toFixed(1)+','+p.y.toFixed(1)+') rotate('+(p.ang+90).toFixed(1)+') scale(.95) translate(-12,-12)');
+      // region: live position if present, else great-circle point
+      var here = fl.live && fl.live.lat!=null ? {lat:fl.live.lat,lon:fl.live.lon}
+        : (fl.dep.lat!=null&&fl.arr.lat!=null ? gcPoint(fl.dep.lat,fl.dep.lon,fl.arr.lat,fl.arr.lon,t) : null);
+      els('over').textContent = here ? regionAt(here.lat,here.lon) : '';
+      els('togo').textContent = fmtToGo(fl,t);
+      els('alt').textContent = fl.live&&fl.live.altFt!=null ? Math.round(fl.live.altFt).toLocaleString() : '—';
+      els('spd').textContent = fl.live&&fl.live.gsKmh!=null ? Math.round(fl.live.gsKmh) : '—';
+      els('lands').textContent = fl.arr&&fl.arr.time ? localTime(fl.arr.time, cfg&&cfg.home&&cfg.home.timezone) : '—';
+    }
+    // idle teaser
+    if(fl&&name){ els('teaser').textContent = name+' lands '+(fl.arr&&fl.arr.time?localTime(fl.arr.time,cfg&&cfg.home&&cfg.home.timezone):'soon'); }
+    // weather
+    if(state.wx){ els('temp').textContent=state.wx.tempC+'°'; }
+    if(cfg&&cfg.home){ els('wxLoc').textContent=cfg.home.city||''; }
+  }
+
+  function show(name){ state.screen=name; order.forEach(function(k){ els(k).classList.toggle('active',k===name); }); if(name==='journey') render(); }
+
+  function isAirborne(){
+    var fl=state.flight; if(!fl) return false;
+    if(state.manual!=null) return state.manual>0 && state.manual<1;
+    var t=progressFromFlight(fl); return t>0 && t<1 && !/sched|arriv|landed|cancel/i.test(fl.status||'EnRoute') || (t>0&&t<1);
+  }
+
+  /* ---- clock ---- */
+  function tickClock(){
+    var tz = state.cfg && state.cfg.home && state.cfg.home.timezone;
+    var now=new Date();
+    try{ els('clock').textContent=new Intl.DateTimeFormat(undefined,{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:tz}).format(now);
+         els('date').textContent=new Intl.DateTimeFormat(undefined,{weekday:'long',day:'numeric',month:'long',timeZone:tz}).format(now);
+    }catch(e){ els('clock').textContent=now.toTimeString().slice(0,5); }
+  }
+
+  /* ---- data ---- */
+  async function loadConfig(){ try{ state.cfg=await (await fetch('/api/config?device='+encodeURIComponent(device))).json(); }catch(e){} }
+  async function loadFlight(){
+    if(!state.cfg||!state.cfg.flight) return;
+    var f=state.cfg.flight;
+    try{ state.flight=await (await fetch('/api/flight?number='+encodeURIComponent(f.number||'')+'&date='+encodeURIComponent(f.date||''))).json(); }catch(e){}
+    var ctrl=els('controls');
+    if((state.flight&&state.flight.mock)||forceControls) ctrl.classList.add('show');
+  }
+  async function loadWeather(){
+    if(!state.cfg||!state.cfg.home) return;
+    try{ state.wx=await (await fetch('/api/weather?lat='+state.cfg.home.lat+'&lon='+state.cfg.home.lon)).json(); }catch(e){}
+  }
+
+  /* ---- controls ---- */
+  document.querySelectorAll('[data-screen]').forEach(function(b){ b.addEventListener('click',function(){ show(b.dataset.screen); }); });
+  els('autoBtn').addEventListener('click',function(){ state.auto=!state.auto; this.classList.toggle('on',state.auto); });
+  els('prog').addEventListener('input',function(e){ state.manual=(+e.target.value)/100; if(state.screen!=='journey') show('journey'); else render(); });
+  els('fsBtn').addEventListener('click',function(){ document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); });
+  window.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='ArrowLeft'){ var i=order.indexOf(state.screen); i=(i+(e.key==='ArrowRight'?1:order.length-1))%order.length; show(order[i]); }
+    else if(e.code==='Space'){ e.preventDefault(); els('autoBtn').click(); }
+    else if(e.key==='f'||e.key==='F'){ els('fsBtn').click(); }
+  });
+
+  /* ---- loops ---- */
+  var flip=false;
+  setInterval(function(){ if(!state.auto) return; if(isAirborne()) show('journey'); else { flip=!flip; show(flip?'idle':'photo'); } },8000);
+  setInterval(tickClock,1000);
+  setInterval(function(){ if(state.screen==='journey') render(); }, 1000);   // recompute dot/eta locally
+  setInterval(loadFlight, 60000);     // re-poll flight every minute
+  setInterval(loadWeather, 15*60000); // weather every 15 min
+
+  (async function init(){
+    await loadConfig(); tickClock();
+    await Promise.all([loadFlight(), loadWeather()]);
+    render(); show(isAirborne()?'journey':'photo');
+  })();
+})();
+</script>
+</body>
+</html>

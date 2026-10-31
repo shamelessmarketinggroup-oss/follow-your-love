@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Set up your device · Follow your love</title>
+<style>
+  :root{
+    --bg:#0b1322; --card:#0f1828; --txt:#e9eef8; --txt2:#9aa6c0; --txt3:#6b768f;
+    --accent:#6f9bf2; --line:rgba(255,255,255,.1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg); color:var(--txt); min-height:100dvh;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    display:flex; align-items:flex-start; justify-content:center; padding:32px 16px}
+  .wrap{width:100%; max-width:440px}
+  .brand{text-align:center; margin-bottom:24px}
+  .brand .slogan{font-size:22px; font-weight:500; letter-spacing:.3px}
+  .brand .heart{width:18px; height:18px; fill:currentColor; vertical-align:-3px; margin-left:6px}
+  .brand .sub{font-size:13px; color:var(--txt3); margin-top:6px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px}
+  label{display:block; font-size:13px; color:var(--txt2); margin:16px 0 6px}
+  label:first-of-type{margin-top:0}
+  input[type=text],input[type=date]{width:100%; height:42px; padding:0 12px; font:inherit; color:var(--txt);
+    background:#0b1322; border:1px solid var(--line); border-radius:10px}
+  input::placeholder{color:var(--txt3)}
+  .photo-row{display:flex; align-items:center; gap:14px}
+  .thumb{width:64px; height:64px; border-radius:12px; background:#0b1322 center/cover no-repeat; border:1px solid var(--line); flex:none}
+  .file-btn{font:inherit; color:var(--txt); background:transparent; border:1px solid var(--line); padding:9px 14px; border-radius:10px; cursor:pointer}
+  .file-btn:hover{background:rgba(255,255,255,.05)}
+  input[type=file]{display:none}
+  .save{width:100%; margin-top:22px; height:46px; font:inherit; font-weight:500; color:#06101f;
+    background:var(--accent); border:0; border-radius:11px; cursor:pointer}
+  .save:disabled{opacity:.6; cursor:default}
+  .msg{margin-top:14px; font-size:13px; text-align:center; min-height:18px}
+  .msg a{color:var(--accent)}
+  .adv{margin-top:18px; font-size:12px; color:var(--txt3)}
+  .adv input{height:34px; margin-top:6px}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <div class="slogan">Follow your love<svg class="heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></div>
+      <div class="sub">Set up the journey your device follows</div>
+    </div>
+
+    <div class="card">
+      <label for="name">Who are you following?</label>
+      <input id="name" type="text" placeholder="e.g. Karl" />
+
+      <label for="flight">Flight number</label>
+      <input id="flight" type="text" placeholder="e.g. QF2" autocapitalize="characters" />
+
+      <label for="date">Flight date</label>
+      <input id="date" type="date" />
+
+      <label for="dest">Destination (optional)</label>
+      <input id="dest" type="text" placeholder="auto-filled from the flight if left blank" />
+
+      <label>Photo</label>
+      <div class="photo-row">
+        <div class="thumb" id="thumb"></div>
+        <button type="button" class="file-btn" id="fileBtn">Choose photo</button>
+        <input id="file" type="file" accept="image/*" />
+      </div>
+
+      <label for="home">Home location (for the clock &amp; weather)</label>
+      <input id="home" type="text" placeholder="e.g. Sydney" />
+
+      <div class="adv">
+        Device ID
+        <input id="device" type="text" value="demo" />
+      </div>
+
+      <button class="save" id="save">Save trip</button>
+      <div class="msg" id="msg"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var photoData = null; // new upload as data URL, or null to keep existing
+
+  // prefill from existing config
+  (async function(){
+    var dev = new URLSearchParams(location.search).get('device') || 'demo';
+    $('device').value = dev;
+    try{
+      var c = await (await fetch('/api/config?device='+encodeURIComponent(dev))).json();
+      if(c){
+        $('name').value = c.partnerName||'';
+        $('flight').value = (c.flight&&c.flight.number)||'';
+        $('date').value = (c.flight&&c.flight.date)||'';
+        $('dest').value = c.destinationCity||'';
+        $('home').value = (c.home&&c.home.city)||'';
+        $('thumb').style.backgroundImage = "url(/api/photo?device="+encodeURIComponent(dev)+"&t="+Date.now()+")";
+      }
+    }catch(e){}
+  })();
+
+  $('fileBtn').addEventListener('click',function(){ $('file').click(); });
+  $('file').addEventListener('change',function(e){
+    var f=e.target.files[0]; if(!f) return;
+    var r=new FileReader();
+    r.onload=function(){ photoData=r.result; $('thumb').style.backgroundImage='url('+photoData+')'; };
+    r.readAsDataURL(f);
+  });
+
+  $('save').addEventListener('click', async function(){
+    var btn=this; var msg=$('msg');
+    var device=$('device').value.trim()||'demo';
+    var name=$('name').value.trim();
+    var flight=$('flight').value.trim().toUpperCase();
+    var date=$('date').value;
+    if(!name||!flight){ msg.textContent='Add at least a name and flight number.'; return; }
+    btn.disabled=true; msg.textContent='Saving…';
+
+    // resolve home -> coords + timezone
+    var home={city:'',lat:null,lon:null,timezone:null};
+    var homeQ=$('home').value.trim();
+    if(homeQ){ try{ var g=await (await fetch('/api/geocode?q='+encodeURIComponent(homeQ))).json(); if(g) home=g; else home.city=homeQ; }catch(e){ home.city=homeQ; } }
+
+    // keep existing photo unless a new one was chosen (backend preserves it)
+    var cfg={ device:device, partnerName:name, flight:{number:flight,date:date},
+      destinationCity:$('dest').value.trim(), home:home };
+    if(photoData) cfg.photo=photoData;
+
+    try{
+      var r=await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
+      if(!r.ok) throw new Error();
+      msg.innerHTML='Saved. <a href="/?device='+encodeURIComponent(device)+'">Open the display →</a>';
+    }catch(e){ msg.textContent='Could not save — is the server running?'; }
+    btn.disabled=false;
+  });
+})();
+</script>
+</body>
+</html>
